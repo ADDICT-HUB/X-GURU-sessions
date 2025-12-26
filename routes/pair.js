@@ -129,28 +129,28 @@ router.get('/', async (req, res) => {
                             try {
                                 Sess = await sendButtons(Gifted, Gifted.user.id, {
             title: '',
-            text: 'Gifted~' + b64data,
-            footer: `> *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɢɪғᴛᴇᴅ ᴛᴇᴄʜ*`,
+            text: 'Xguru' + b64data,
+            footer: `> *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɢᴜʀᴜᴛᴇᴄʜ*`,
             buttons: [
                 { 
                     name: 'cta_copy', 
                     buttonParamsJson: JSON.stringify({ 
                         display_text: 'Copy Session', 
-                        copy_code: 'Gifted~' + b64data 
+                        copy_code: 'Xguru' + b64data 
                     }) 
                 },
                 {
                     name: 'cta_url',
                     buttonParamsJson: JSON.stringify({
                         display_text: 'Visit Bot Repo',
-                        url: 'https://github.com/mauricegift/gifted-md'
+                        url: 'https://github.com/ADDICT-HUB/XGURU'
                     })
                 },
                 {
                     name: 'cta_url',
                     buttonParamsJson: JSON.stringify({
                         display_text: 'Join WaChannel',
-                        url: 'https://whatsapp.com/channel/0029Vb3hlgX5kg7G0nFggl0Y'
+                        url: 'https://whatsapp.com/channel/0029VbBNUAFFXUuUmJdrkj1f'
                     })
                 }
             ]
