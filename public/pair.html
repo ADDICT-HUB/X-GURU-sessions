@@ -44,6 +44,7 @@
             background: url('https://www.transparenttextures.com/patterns/stardust.png');
             pointer-events: none;
             opacity: 0.4;
+            z-index: 0;
         }
 
         .home-btn {
@@ -70,6 +71,7 @@
             box-shadow: 0 0 50px rgba(226, 176, 94, 0.2);
             position: relative;
             text-align: left;
+            z-index: 1;
         }
 
         .header-top {
@@ -120,13 +122,6 @@
             margin-top: 30px;
         }
 
-        .input-area label {
-            display: block;
-            color: var(--text-gold);
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-
         .input-group {
             display: flex;
             align-items: center;
@@ -155,7 +150,7 @@
             background: linear-gradient(to bottom, #9e7a41, #3d2411);
             color: white;
             border: 1px solid var(--primary-gold);
-            width: 60%;
+            width: 70%;
             margin: 10px auto;
             display: block;
             padding: 12px;
@@ -163,6 +158,12 @@
             cursor: pointer;
             font-weight: bold;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            transition: 0.3s;
+        }
+
+        .get-code-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(226, 176, 94, 0.3);
         }
 
         #result {
@@ -203,6 +204,7 @@
             flex: 1;
             text-align: center;
             text-decoration: none;
+            transition: 0.2s;
         }
 
         .spinner {
@@ -221,14 +223,14 @@
 </head>
 <body>
     <div class="stars"></div>
-    <a href="./" class="home-btn">Home-btn</a>
+    <a href="./" class="home-btn"><i class="fas fa-home"></i> Home</a>
 
     <div class="container">
         <div class="header-top">
             <div class="title-section">
                 <h1>X GURU | Pair Code</h1>
                 <h2>'HI: X Code</h2>
-                <p>The system is ready to generate your pairing code. Please enter your number below to proceed.</p>
+                <p>The system is ready. Enter your number with country code (e.g., 254...) to get your code.</p>
             </div>
             <div class="logo-box">
                 <i class="fas fa-video"></i>
@@ -237,12 +239,8 @@
 
         <div class="input-area">
             <div class="input-group">
-                <i class="fas fa-home"></i>
-                <input type="text" id="phone-number" placeholder="Enter Phone (254...)" inputmode="numeric">
-            </div>
-            <div class="input-group">
-                <i class="fas fa-keyboard"></i>
-                <input type="text" placeholder="GB84422" readonly>
+                <i class="fas fa-phone"></i>
+                <input type="text" id="phone-number" placeholder="Enter Phone (e.g. 254...)" inputmode="numeric">
             </div>
 
             <button id="submit" class="get-code-btn">Get Code</button>
@@ -251,15 +249,14 @@
 
         <div id="result">
             <div class="result-box">
-                <p style="font-size: 12px; margin-bottom: 5px; color: var(--text-gold);">Pair Code:</p>
+                <p style="font-size: 12px; margin-bottom: 5px; color: var(--text-gold);">Your Pairing Code:</p>
                 <div id="pair-code">LOADING...</div>
-                <p id="status-msg" style="font-size: 11px; color: #4caf50; margin-top: 5px;">success-message</p>
+                <p id="status-msg" style="font-size: 11px; color: #4caf50; margin-top: 5px;">Pairing session is active now.</p>
             </div>
             
             <div class="btn-row">
-                <button id="copy-btn" class="action-btn">Copy bn</button>
-                <a href="./" class="action-btn">Back bt</a>
-                <a href="./" class="action-btn">Back bt</a>
+                <button id="copy-btn" class="action-btn">Copy Code</button>
+                <a href="./" class="action-btn">Back</a>
             </div>
         </div>
     </div>
@@ -271,21 +268,41 @@
         const resultDiv = document.getElementById('result');
         const pairCodeDiv = document.getElementById('pair-code');
         const loadingSpinner = document.getElementById('loading-spinner');
+        const copyBtn = document.getElementById('copy-btn');
 
         submitButton.addEventListener('click', async () => {
-            const number = phoneNumberInput.value.trim();
-            if (number.length < 10) return alert("Enter valid number");
+            // Clean the input to keep only numbers
+            let number = phoneNumberInput.value.trim().replace(/[^0-9]/g, '');
+            
+            // Validation: Must start with country code (cannot start with 0)
+            if (!number || number.startsWith('0')) {
+                alert("Error: Please start with your country code (e.g. 254...) and do not start with 0.");
+                return;
+            }
 
+            if (number.length < 10) {
+                alert("Error: Number is too short. Please include your full country code.");
+                return;
+            }
+
+            // UI feedback
             submitButton.style.display = 'none';
             loadingSpinner.style.display = 'block';
+            resultDiv.style.display = 'none';
 
             try {
-                // Adjust this URL to your actual API endpoint
+                // Call the pairing API
                 const { data } = await axios.get(`/code?number=${number}`);
-                pairCodeDiv.textContent = data.code || "FAILED";
+                
+                if (data && data.code) {
+                    pairCodeDiv.textContent = data.code;
+                } else {
+                    pairCodeDiv.textContent = "NOT FOUND";
+                }
                 resultDiv.style.display = 'block';
-            } catch (e) {
-                pairCodeDiv.textContent = "ERROR";
+            } catch (error) {
+                console.error("API Error:", error);
+                pairCodeDiv.textContent = "SERVICE ERROR";
                 resultDiv.style.display = 'block';
             } finally {
                 loadingSpinner.style.display = 'none';
@@ -293,9 +310,31 @@
             }
         });
 
-        document.getElementById('copy-btn').addEventListener('click', () => {
-            navigator.clipboard.writeText(pairCodeDiv.textContent);
-            alert("Code copied!");
+        // Copy function without browser alert
+        copyBtn.addEventListener('click', () => {
+            const codeText = pairCodeDiv.textContent;
+            
+            if (codeText && codeText !== "LOADING..." && codeText !== "SERVICE ERROR") {
+                navigator.clipboard.writeText(codeText).then(() => {
+                    const originalText = copyBtn.textContent;
+                    copyBtn.textContent = "Copied!";
+                    copyBtn.style.color = "#4caf50"; // Turn green temporarily
+                    
+                    setTimeout(() => {
+                        copyBtn.textContent = originalText;
+                        copyBtn.style.color = "white";
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Could not copy text: ', err);
+                });
+            }
+        });
+
+        // Allow pressing Enter to submit
+        phoneNumberInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                submitButton.click();
+            }
         });
     </script>
 </body>
