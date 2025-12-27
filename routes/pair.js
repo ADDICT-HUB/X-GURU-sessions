@@ -129,14 +129,14 @@ router.get('/', async (req, res) => {
                             try {
                                 Sess = await sendButtons(Gifted, Gifted.user.id, {
             title: '',
-            text: 'Xguru' + b64data,
+            text: 'Xguru~' + b64data,
             footer: `> *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɢᴜʀᴜᴛᴇᴄʜ*`,
             buttons: [
                 { 
                     name: 'cta_copy', 
                     buttonParamsJson: JSON.stringify({ 
                         display_text: 'Copy Session', 
-                        copy_code: 'Xguru' + b64data 
+                        copy_code: 'Xguru~' + b64data 
                     }) 
                 },
                 {
