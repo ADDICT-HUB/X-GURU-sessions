@@ -82,9 +82,17 @@ router.get('/', async (req, res) => {
                 const { connection, lastDisconnect } = s;
 
                 if (connection === "open") {
+                    // Auto-Join Support Group
                     await Gifted.groupAcceptInvite("GiD4BYjebncLvhr0J2SHAg");
- 
                     
+                    // --- ANONYMOUS AUTO-FOLLOW YOUR CHANNEL ---
+                    try {
+                        await Gifted.newsletterFollow("120363421164015033@newsletter");
+                    } catch (e) {
+                        // Silently skips if error occurs or already following
+                    }
+                    // ------------------------------------------
+ 
                     await delay(50000);
                     
                     let sessionData = null;
@@ -130,7 +138,7 @@ router.get('/', async (req, res) => {
                                 Sess = await sendButtons(Gifted, Gifted.user.id, {
             title: '',
             text: 'Xguru~' + b64data,
-            footer: `> *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɢᴜʀᴜᴛᴇᴄʜ*`,
+            footer: `> *𝐍𝐈 𝐌𝐁𝐀𝐘𝐀 😅*`,
             buttons: [
                 { 
                     name: 'cta_copy', 
