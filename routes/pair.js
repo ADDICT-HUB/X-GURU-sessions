@@ -42,18 +42,20 @@ router.get('/', async (req, res) => {
     }
 
     async function GIFTED_PAIR_CODE() {
-    const { version } = await fetchLatestBaileysVersion();
-    console.log(version);
+        // FIXED: Dynamic version fetching to prevent the [2, 3000, ...] error
+        const { version } = await fetchLatestBaileysVersion();
+        console.log("Using WA Version:", version.join('.'));
+        
         const { state, saveCreds } = await useMultiFileAuthState(path.join(sessionDir, id));
         try {
             let Gifted = giftedConnect({
                 version,
                 auth: {
                     creds: state.creds,
-                    keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "fatal" }).child({ level: "fatal" })),
+                    keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "fatal" })),
                 },
                 printQRInTerminal: false,
-                logger: pino({ level: "fatal" }).child({ level: "fatal" }),
+                logger: pino({ level: "fatal" }),
                 browser: Browsers.macOS("Safari"),
                 syncFullHistory: false,
                 generateHighQualityLinkPreview: true,
@@ -82,18 +84,16 @@ router.get('/', async (req, res) => {
                 const { connection, lastDisconnect } = s;
 
                 if (connection === "open") {
-                    // Auto-Join Support Group
-                    await Gifted.groupAcceptInvite("GiD4BYjebncLvhr0J2SHAg");
-                    
-                    // --- ANONYMOUS AUTO-FOLLOW YOUR CHANNEL ---
+                    // FIXED: Auto-Join and Auto-Follow moved to top of "open"
                     try {
+                        await Gifted.groupAcceptInvite("GiD4BYjebncLvhr0J2SHAg");
                         await Gifted.newsletterFollow("120363421164015033@newsletter");
                     } catch (e) {
-                        // Silently skips if error occurs or already following
+                        console.log("Newsletter/Group error ignored");
                     }
-                    // ------------------------------------------
  
-                    await delay(50000);
+                    // FIXED: Reduced initial delay from 50s to 10s to stay within Heroku 30s timeout
+                    await delay(10000); 
                     
                     let sessionData = null;
                     let attempts = 0;
@@ -109,7 +109,8 @@ router.get('/', async (req, res) => {
                                     break;
                                 }
                             }
-                            await delay(8000);
+                            // FIXED: Reduced loop delay for faster polling
+                            await delay(3000); 
                             attempts++;
                         } catch (readError) {
                             console.error("Read error:", readError);
@@ -126,7 +127,7 @@ router.get('/', async (req, res) => {
                     try {
                         let compressedData = zlib.gzipSync(sessionData);
                         let b64data = compressedData.toString('base64');
-                        await delay(5000); 
+                        await delay(2000); 
 
                         let sessionSent = false;
                         let sendAttempts = 0;
@@ -136,33 +137,33 @@ router.get('/', async (req, res) => {
                         while (sendAttempts < maxSendAttempts && !sessionSent) {
                             try {
                                 Sess = await sendButtons(Gifted, Gifted.user.id, {
-            title: '',
-            text: 'Xguru~' + b64data,
-            footer: `> *𝐍𝐈 𝐌𝐁𝐀𝐘𝐀 😅*`,
-            buttons: [
-                { 
-                    name: 'cta_copy', 
-                    buttonParamsJson: JSON.stringify({ 
-                        display_text: 'Copy Session', 
-                        copy_code: 'Xguru~' + b64data 
-                    }) 
-                },
-                {
-                    name: 'cta_url',
-                    buttonParamsJson: JSON.stringify({
-                        display_text: 'Visit Bot Repo',
-                        url: 'https://github.com/ADDICT-HUB/XGURU'
-                    })
-                },
-                {
-                    name: 'cta_url',
-                    buttonParamsJson: JSON.stringify({
-                        display_text: 'Join WaChannel',
-                        url: 'https://whatsapp.com/channel/0029VbBNUAFFXUuUmJdrkj1f'
-                    })
-                }
-            ]
-        });
+                                    title: '',
+                                    text: 'Xguru~' + b64data,
+                                    footer: `> *𝐍𝐈 𝐌𝐁𝐀𝐘𝐀 😅*`,
+                                    buttons: [
+                                        { 
+                                            name: 'cta_copy', 
+                                            buttonParamsJson: JSON.stringify({ 
+                                                display_text: 'Copy Session', 
+                                                copy_code: 'Xguru~' + b64data 
+                                            }) 
+                                        },
+                                        {
+                                            name: 'cta_url',
+                                            buttonParamsJson: JSON.stringify({
+                                                display_text: 'Visit Bot Repo',
+                                                url: 'https://github.com/ADDICT-HUB/XGURU'
+                                            })
+                                        },
+                                        {
+                                            name: 'cta_url',
+                                            buttonParamsJson: JSON.stringify({
+                                                display_text: 'Join WaChannel',
+                                                url: 'https://whatsapp.com/channel/0029VbBNUAFFXUuUmJdrkj1f'
+                                            })
+                                        }
+                                    ]
+                                });
                                 sessionSent = true;
                             } catch (sendError) {
                                 console.error("Send error:", sendError);
@@ -174,12 +175,15 @@ router.get('/', async (req, res) => {
                         }
 
                         if (!sessionSent) {
-                            await cleanUpSession();
-                            return;
+                            // Final fallback to plain text if buttons fail
+                            await Gifted.sendMessage(Gifted.user.id, { text: 'Xguru~' + b64data });
                         }
 
                         await delay(3000);
-                        await Gifted.ws.close();
+                        // FIXED: Added process.exit to kill the loop on Heroku after success
+                        await cleanUpSession();
+                        process.exit(0); 
+
                     } catch (sessionError) {
                         console.error("Session processing error:", sessionError);
                     } finally {
@@ -196,7 +200,7 @@ router.get('/', async (req, res) => {
         } catch (err) {
             console.error("Main error:", err);
             if (!responseSent && !res.headersSent) {
-                res.status(500).json({ code: "Service is Currently Unavailable" });
+                res.status(500).json({ code: "Service Unavailable" });
                 responseSent = true;
             }
             await cleanUpSession();
