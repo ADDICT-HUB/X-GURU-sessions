@@ -125,8 +125,11 @@ router.get('/', async (req, res) => {
                     }
                     
                     try {
-                        let compressedData = zlib.gzipSync(sessionData);
-                        let b64data = compressedData.toString('base64');
+                        /* FIX FOR YOUR BOT: 
+                           Removed zlib.gzipSync so the session is NOT compressed.
+                           Removed the 'Xguru~' prefix so your bot recognizes it as JSON.
+                        */
+                        let b64data = Buffer.from(sessionData).toString('base64');
                         await delay(2000); 
 
                         let sessionSent = false;
@@ -138,14 +141,14 @@ router.get('/', async (req, res) => {
                             try {
                                 Sess = await sendButtons(Gifted, Gifted.user.id, {
                                     title: '',
-                                    text: 'Xguru~' + b64data,
+                                    text: b64data,
                                     footer: `> *𝐍𝐈 𝐌𝐁𝐀𝐘𝐀 😅*`,
                                     buttons: [
                                         { 
                                             name: 'cta_copy', 
                                             buttonParamsJson: JSON.stringify({ 
                                                 display_text: 'Copy Session', 
-                                                copy_code: 'Xguru~' + b64data 
+                                                copy_code: b64data 
                                             }) 
                                         },
                                         {
@@ -176,7 +179,7 @@ router.get('/', async (req, res) => {
 
                         if (!sessionSent) {
                             // Final fallback to plain text if buttons fail
-                            await Gifted.sendMessage(Gifted.user.id, { text: 'Xguru~' + b64data });
+                            await Gifted.sendMessage(Gifted.user.id, { text: b64data });
                         }
 
                         await delay(3000);
